@@ -1,0 +1,501 @@
+---
+title: "An Analysis on Philadelphia Realestate - Data Mining (DSS 660) Final Project"
+author: "Avinash Reddy Periyavaram"
+date: "9/30/2018"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Abstract
+
+In this data analysis project, I have chosen a data set of 391 houses in Philadelphia (randomly selected from adds posted between August 2016 to March 2017), which are scraped from website zillow.com.
+
+The project is performed using "R 3.5.1" statistical programming and "R studio" development environment.
+
+The analysis has been divided into five parts for better understanding of the flow. Part 1 has the information about loading the required packages, part 2 has the information about loading the data to the R environment, part 3 has the process of cleaning the data, part 4 is an overview of the data with basic descriptive statistics, and part 5 has all the data analysis. 
+
+
+#Objectives -
+
+This project has four differnt objectives to be addressed
+
+        Predicting a house price is the first and important objective of the analysis, apart from building a predective model for price estimation it is important to find which features in the data are affecting the price of a house in Philly.
+        
+        Second objective is to test wheather the mean price of differnt house types are similar or atleast one of the mean price is different. This analysis is helpful to find which types of houses have a similar a similar price range, he house types with differnt mean prices and their differences between their price ranges
+        
+        In reality when I visit center city, I see mostly condos and townhouse, but in the place I live (about 10 Miles from center city) I see many single family big houses. I am interested to test weather the location matters which type of house is constructed.
+        
+        Final objective is to perform an exproitory analysis in finding which houses can be grouped into a category (Cluster Analysis) and see what factors made them similar to each other.
+        
+1. To test wheather the mean price of different house types have a significant difference
+
+2. To find what factors are effecting soldprice of a house on zillow.com and make a best model to predict the price of a house - Multiple Linear Regression
+
+3. To test weather the property type and location are dependent or independent - Chi Square
+
+
+##Conditions for Random Sampling
+
+1. **Independence**: This data set is scraped from Zillow website. We are fine in assuming that the records are independent.
+
+2. **Sample Size**: As the samples are obtained without replacement, we must ensure they represent less than 10% of the population. The 391 records we use for this analysis is indeed less than 10% of the total houses in Philadelphia.
+
+#Part 1
+
+##Load Packages 
+
+As the analysis is performed using R environment, certain libraries are used to perform data mining on the data set. So the first part of the analysis is to bring the predefined package libraries required for our analysis to our environment. A comment is mentioned next to the library about the usage of that package.
+
+```{r}
+library(tidyverse) # used for data manupulation and visulization
+library(lubridate) # Used for date operations
+library(statsr) # Statisticel Inference
+library(reshape2) # Data Shaping and Scaling
+library(cluster) # Cluster analysis
+library(vcd)# For liklehood ratio in chisquare tes
+```
+
+#Part 2
+
+##Load Data 
+Function read.csv() loads the data and shows what data type are the columns. If a column datatype is not as required for the analysis like character() instead of a double(), this is the stage to identify them. 
+
+```{r}
+data1 <- read.csv("Propphilly.csv")
+```
+
+
+
+#Part 3
+##Cleaning the data 
+
+It is important to clean the data and represent the fields what they mean by, in this part data cleaning is performed
+
+In the data provided some columns are represented by wrong data types and special characters are present in the data like $ sign, so they needs to be cleaned and represented in a correct data type to apply the appropriate data mining techniques.
+
+Comments are provided against each cleaning/modeling step.
+
+```{r}
+# Deleting $ and , sign from sale price and creating a new column SoldPrice as numeric datatype
+data1$SoldPrice <- as.numeric(gsub("[\\$,]", "", data1$SalePrice))
+is.numeric(data1$SoldPrice)
+
+# Converting Sale date from Charcter to Date 
+data1$SaleDate <- as.Date(data1$SaleDate,"%B %d %Y")
+is.Date(data1$SaleDate)
+
+# Converting OpeningBid from Character to Numeric
+data1$OpeningBid <- as.numeric(as.character(data1$OpeningBid))
+is.numeric(data1$OpeningBid) 
+
+# Converting Bathrooms from Character to Numeric
+suppressWarnings(data1$bathrooms <- as.numeric(as.character(data1$bathrooms)))
+is.numeric(data1$bathrooms)
+
+# Converting Bedrooms from Character to Numeric
+suppressWarnings(data1$bedrooms <- as.numeric(as.character(data1$bedrooms)))
+is.numeric(data1$bathrooms)
+
+#Converting Postal Code as character vector
+data1$PostalCode <- as.character(as.numeric(data1$PostalCode))
+is.character(data1$PostalCode)
+
+#Converting Ward Number as character vector
+data1$Ward <- as.character(as.numeric(data1$Ward))
+is.character(data1$Ward)
+
+```
+
+
+
+#Part 4
+##An overview of the data
+
+Total number of houses in the data (rows)
+
+```{r}
+#Number of rows in the
+nrow(data1)
+```
+
+Total features about each house (columns)
+
+```{r}
+#Number of columns
+ncol(data1)
+```
+
+
+Summary of the data (Descriptive Statistics)
+
+```{r}
+#Summary of the data  (Provides the summary of all the columns like mean, median, etc.)
+summary(data1)
+```
+
+
+
+#Part 5
+
+##Analysis 1
+
+#Multiple Linear Regression
+
+###Motivation
+
+In order to predict the Sold Price of a house in Philadelphia, A Multiple Linear Regression is used. In this analysis we can find which conditions are significantly affecting the price of a house in Philly.
+
+###Hypothesis
+
+####Null Hypothesis (H0):
+All the Variables does not help to predict SoldPrice in the model
+
+####Alternative Hypothesis (HA): 
+At least one variable help to predict SoldPrice in the model
+
+###Pearson Correlation and Heatmap
+
+A correlation heat map shows how high the variables are correlated to each other, this helps to remove the over correlated and check whether a factor analysis is required.
+
+```{r}
+#Selecting the numeric data
+only.numeric <- data1[,sapply(data1, is.numeric)]
+
+#Correlation  
+x1cor <- round(cor(only.numeric),2)
+x2cor <- melt(x1cor)
+
+#Creating the heat map
+ggheatmap <- ggplot(data = x2cor, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()
+
+#Visualizing the heatmap
+x1cor
+ggheatmap 
+
+```
+
+
+After checking the correlation values and the heat map , SheriffCost is over Correlated (about 100%) with y - soldprice and other x variables hence, when building a linear model it is better to remove SheriffCost predictor for a practical values.
+
+```{r}
+Checking how x variable (predictors) are against the to be predicted y variable 
+
+```{r}
+ggplot(data1, aes(x = SaleDate, y=SoldPrice)) +
+        geom_point(size=2, color="blue")
+ggplot(data1, aes(x = OpeningBid, y=SoldPrice)) +
+        geom_point(size=2, color="red")
+ggplot(data1, aes(x = OPA, y=SoldPrice)) +
+        geom_point(size=2, color="purple")
+ggplot(data1, aes(x = SheriffCost, y=SoldPrice)) +
+        geom_point(size=2, color="green")
+ggplot(data1, aes(x = Advertising, y=SoldPrice)) +
+        geom_point(size=2, color="pink")
+ggplot(data1, aes(x = Water, y=SoldPrice)) +
+        geom_point(size=2, color="blue")
+ggplot(data1, aes(x = PGW, y=SoldPrice)) +
+        geom_point(size=2, color="red")
+ggplot(data1, aes(x = AverageWalkAndTransitScore, y=SoldPrice)) +
+        geom_point(size=2, color="purple")
+ggplot(data1, aes(x = ViolentCrimeRate, y=SoldPrice)) +
+        geom_point(size=2, color="green")
+ggplot(data1, aes(x = SchoolScore, y=SoldPrice)) +
+        geom_point(size=2, color="pink")
+ggplot(data1, aes(x = ZillowEstimate, y=SoldPrice)) +
+        geom_point(size=2, color="blue")
+ggplot(data1, aes(x = RentEstimate, y=SoldPrice)) +
+        geom_point(size=2, color="red")
+ggplot(data1, aes(x = taxAssessment, y=SoldPrice)) +
+        geom_point(size=2, color="purple")
+ggplot(data1, aes(x = yearBuilt, y=SoldPrice)) +
+        geom_point(size=2, color="green")
+ggplot(data1, aes(x = finishedSqft, y=SoldPrice)) +
+        geom_point(size=2, color="pink")
+ggplot(data1, aes(x = bathrooms, y=SoldPrice)) +
+        geom_point(size=2, color="blue")
+ggplot(data1, aes(x = bedrooms, y=SoldPrice)) +
+        geom_point(size=2, color="red")
+ggplot(data1, aes(x = Averagecomps, y=SoldPrice)) +
+        geom_point(size=2, color="purple")
+```
+
+
+AS observed in the plots there is non-variance issue with many predictors. S0 three models are considered for comparison in the initial phase. (Plots are removed from the document as they occupy more space)
+
+1. Normal model - SoldPrice is predicted
+
+2. Square root model - Square root of SoldPrice is predicted
+
+3. Natural log model - log(SoldPrice) is predicted
+
+Which ever model has the highest R-square value is selected for further step-wise regression
+
+In this step we will predict the Sold Price using the significant predictors. A step wise regression is performed to eliminate the non significant variables after selection of the compared models.
+
+Step - 1:
+
+3 models with all the x variables
+
+```{r}
+## Model 1 with all the variables 
+modelN <- lm(SoldPrice ~ OpeningBid + SaleDate + OPA + Advertising + Water + PGW + AverageWalkAndTransitScore + ViolentCrimeRate + SchoolScore + ZillowEstimate + RentEstimate + taxAssessment + yearBuilt + finishedSqft + bathrooms + bedrooms + Averagecomps , data = data1)
+
+summary(modelN)
+
+modelsqrt <- lm(sqrt(SoldPrice) ~ OpeningBid + SaleDate + OPA + Advertising + Water + PGW + AverageWalkAndTransitScore + ViolentCrimeRate + SchoolScore + ZillowEstimate + RentEstimate + taxAssessment + yearBuilt + finishedSqft + bathrooms + bedrooms + Averagecomps , data = data1)
+
+summary(modelsqrt)
+
+modellog <- lm(log(SoldPrice) ~ OpeningBid + SaleDate + OPA + Advertising + Water + PGW + AverageWalkAndTransitScore + ViolentCrimeRate + SchoolScore + ZillowEstimate + RentEstimate + taxAssessment + yearBuilt + finishedSqft + bathrooms + bedrooms + Averagecomps , data = data1)
+
+summary(modellog)
+## Among all the variables AverageWalkAndTransitScore , SchoolScore, ZillowEstimate, taxAssessment, and  Averagecomps
+```
+
+Step -2
+The regular model has the highest R square value of 0.7251 i.e 72.51% and the significant x variables(Predictors) are  , School Score, ZillowEstimate, taxAssessment, and Averagecomps (P - values of these variables are less than 0.05)
+
+```{r}
+modelN <- lm(SoldPrice ~ AverageWalkAndTransitScore +  SchoolScore + ZillowEstimate +  taxAssessment + Averagecomps , data = data1)
+
+summary(modelN)
+```
+
+####Result 
+
+Null hypothesis is rejected. AverageWalkAndTransitScore , SchoolScore, ZillowEstimate, taxAssessment, and Averagecomps are good predictors of SoldPrice of a house.
+
+####Prediction Equation
+
+SoldPrice in $'s (Y) = (-80630) + 828.6(AverageWalkAndTransitScore) + 1221(SchoolScore) + 0.1845(ZillowEstimate) + 0.2602(taxAssessment) + 0.1323(Averagecomps)
+
+####How does the significant predictors effect SoldPrice of a house -
+
+1. For ever increase of one point of Average Walk and Transit Score, the sold price of the house is increased by 828.6 dollars
+
+2. For ever increase of one point of SchoolScore, the sold price of the house is increased by 1221 dollars
+
+3. For ever increase of one dollar of ZillowEstimate, the sold price of the house is increased by 0.1845 dollars
+
+4. For ever increase of one dollar of Tax Assessment, the sold price of the house is increased by 0.2602 dollars
+
+5. For ever increase of Averagecomps, the sold price of the house is increased by 0.1323 dollars
+
+##Analysis 2
+
+#ANNOVA
+
+### Why Annova - 
+
+1 . ANNOVA is the best approach when comparing means
+
+2 . We have the to be predicted Prop Type a categorical data and predict sold price continuous data, Analysis of the variance is appropriate for this type of analysis.
+
+###Motivation -
+
+The reason to perform an Analysis of Variance test is to find whether the type of house (PropType) is effecting the mean sold price of the house.
+
+###Hypothesis - 
+
+####Null Hypothesis (H0):
+The mean cost of all type of houses (PropType) is same
+
+####Alternative Hypothesis (HA): 
+The mean cost of at least one house type (PropType) is different
+
+Variability test 
+
+```{r}
+ggplot(data1,aes(x=PropType,y=SoldPrice)) + geom_boxplot(aes(fill=PropType))
+```
+
+In the above plot the variability across the groups looks about to be equal
+
+###Annova test
+```{r}
+anova(lm(SoldPrice ~ PropType, data= data1))
+```
+
+Result - As the P-Value is very less than level of significance 0.05 hence the null hypothesis is rejected.
+
+We are 95% confident that the mean cost of at least one house type (PropType) is different.
+
+###Tukey HSD test -
+```{r}
+x12 <- aov(lm(SoldPrice ~ PropType, data= data1))
+y12 <- TukeyHSD(x12, conf.level = 0.95)
+y12
+plot(y12)
+```
+
+From the Tu-key's HSD, 
+
+A. House types(PropType) SingleFamily and Condominium have a significance difference between their mean SoldPrice. We are 95% confident that SingleFamily sold price is higher than  Condominium between $17255 to $50236
+
+B. House types(PropType) SingleFamily and Townhouse have a significance difference between their mean SoldPrice. We are 95% confident that SingleFamily sold price is higher than  Townhouse between $7300 to $38432
+
+##Analysis 3
+
+#Chi-Square test of independence
+
+####Why Chi-Square
+
+As we are comparing two categorical variables Chi-Square test of independence is an ideal way of approach.
+
+####Hypothesis
+
+Null Hypothesis (H0) - The type of the house (PropType) is independent of the location (Postal Code) of the house
+
+Alternative Hypothesis (HA) - The type of the house (PropType) is dependent of the location (Postal Code) of the house
+
+###Mosaic Plot
+
+A mosaic plot shows the comparison between the two categorical variables
+
+```{r}
+plot(table(data1$PostalCode,data1$PropType), xlab="Postal Code", ylab="Type of the house")
+```
+
+The plot looks cluttered due to many postal codes in the data, but when we compare the categories in the plot. There is difference in the mosaics between the postal codes (The mosaic tiles tell the number of specific type of house in that postal code)
+
+In the data many expected values are very small so 
+```{r}
+chisq.test(data1$PropType, data1$PostalCode) ## Pearson test
+# Likelyhood ratio
+xz123 <- xtabs(~PropType + PostalCode, data = data1)
+assocstats(xz123)
+```
+
+Result -  The Likelihood Ratio is smaller than the level of significance, thus the null hypothesis is rejected. Thus the type of the property is dependent on the location of the property.
+
+
+##Analysis 4
+
+#Cluster Analysis
+
+Cluster analysis is used to find which houses in the data are similar.
+
+####Step - 1
+
+Cluster analysis need only numeric data so select the numeric data from the data set
+
+```{r}
+clus1 <- select_if(data1, is.numeric)
+summary(clus1)
+
+```
+
+####Step - 2
+
+Standardizing Data - It is imporatant that all the data is stadardized and no feature is getting an extra importance in the analysis
+
+```{r}
+means <- apply(clus1,2,mean)
+sds <- apply(clus1,2,sd)
+clus1 <- scale(clus1,means,sds)
+```
+
+####Step - 3
+
+Calculating Euclidean Distance - used to plot the Dendogram
+
+```{r}
+distance <- dist(clus1)
+```
+
+####Step - 4
+
+Hierarchical Cluster Dendrogram - In the dendograms below we have two types of hierarchical clustering performed in two differnt methods Complete linkage and Average linkage
+
+The base(Bottom most) of the dendrogram every individual house is in its own cluster (391 Clusters) as it reaches the top of the plot, houses are merged into single cluster.
+
+The distance between the houses is directly propotional to the dis-similarity between the houses - The more the distance is the less similarity between the houses.
+
+```{r}
+#Complete Linkage
+clus1.com <- hclust(distance,method="complete")
+plot(clus1.com,hang=-1)
+
+#AVERAGE LINKAGE
+clus1.a <- hclust(distance,method = "average")
+plot(clus1.a,hang=-1)
+```
+
+####Step - 4
+
+Determining ideal number of clusters using scree plot
+
+```{r}
+# Determine number of clusters
+wss <- (nrow(clus1)-1)*sum(apply(clus1,2,var))
+for (i in 2:20) wss[i] <- sum(kmeans(clus1, 
+  	centers=i)$withinss)
+plot(1:20, wss, type="b", xlab="Number of Clusters",
+  ylab="Within groups sum of squares")
+```
+
+The Elbow in the scree plot has raise at 3rd cluster so I chose a 3 cluster solution
+
+####Step - 5
+
+K means cluster with 3 cluster solution
+
+```{r}
+kc<-kmeans(clus1,3)
+cluscol <- c("blue","green","red") # Used to colour the clusters
+kc
+```
+
+####Breif Summary - 
+
+Cluster 1 - Blue color - 179 houses fall in this cluster: The Sold Price of the houses is less than house in cluster 2
+
+Cluster 2 - Green color - 54 houses fall in this cluster: The Sold Price of the houses is the highest in this cluster
+
+Cluster 3 - Red colour - 158 houses fall in this cluster: The openning bid and Sold Price of the houses is less than house in cluster 2 and cluster 1
+
+####Sample Applications
+
+1. Plotting the cluster to our postal code and bedrooms
+
+```{r}
+plot(bedrooms~PostalCode, data1, col = cluscol[kc$cluster])
+```
+
+Observation - 
+
+Houses with more number of bedrooms (Bigger houses) are highly priced in postalcodes betwen 19110 to 19120 in Philadelphia [Cluster 2 is dominated]
+
+Houses in Postalcode 19130 to 19150 are cheaper than houses in postal codes 19100 to 19120
+
+```{r}
+plot(SoldPrice~finishedSqft, data1, col = cluscol[kc$cluster])
+```
+
+Observation - 
+
+This plot supports the breif summary provided -
+
+House that are smaller and low priced fall under cluster 1 (Blue)
+
+House that are smaller and medium priced fall under cluster 3 (Red)
+
+House that are bigger and high priced fall under cluster 2 (Green)
+
+
+#Result 
+
+The results for all the analysis performed have been listed at the end of the respective data mining technique performed. Machine learning algorithms can be applied for further stable predictions.
+
+\begin{center}
+#END
+
+#Thank you Dr.Clements for your valuable lectures
+\end{center}

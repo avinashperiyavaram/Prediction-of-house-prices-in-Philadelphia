@@ -1,0 +1,27 @@
+Housing prices in Philadelphia
+
+
+Abstract
+In this data analysis project, I have chosen a data set of 391 houses in Philadelphia (randomly selected from adds posted between August 2016 to March 2017), which are scraped from website zillow.com.
+The project is performed using “R 3.5.1” statistical programming and “R studio” development environment.
+The analysis has been divided into five parts for better understanding of the flow. 
+Part 1 has the information about loading the required packages
+Part 2 has the information about loading the data to the R environment, 
+Part 3 has the process of cleaning the data
+Part 4 is an overview of the data with basic descriptive statistics 
+Part 5 has all the data analysis.
+
+Conditions for Random Sampling
+
+1.	Independence: This data set is scraped from Zillow website. We are fine in assuming that the records are independent.
+2.	Sample Size: As the samples are obtained without replacement, we must ensure they represent less than 10% of the population. The 391 records we use for this analysis is indeed less than 10% of the total houses in Philadelphia.
+ 
+Objectives -
+This project has four differnt objectives to be addressed
+    Predicting a house price is the first and important objective of the analysis, apart from building a predective model for price estimation it is important to find which features in the data are affecting the price of a house in Philly.
+    
+    Second objective is to test wheather the mean price of differnt house types are similar or atleast one of the mean price is different. This analysis is helpful to find which types of houses have a similar a similar price range, he house types with differnt mean prices and their differences between their price ranges
+    
+    In reality when I visit center city, I see mostly condos and townhouse, but in the place I live (about 10 Miles from center city) I see many single family big houses. I am interested to test weather the location matters which type of house is constructed.
+    
+    Final objective is to perform an exproitory analysis in finding which houses can be grouped into a category (Cluster Analysis) and see what factors made them similar to each other.    
